@@ -1,4 +1,4 @@
-# Local Edge AI Voice Assistant (Kokoro TTS Edition)
+# Local Edge AI Voice Assistant (for Arduino VENTUNO Q)
 
 A fully offline, privacy-first voice assistant built with Arduino App Lab for the VENTUNO Q. It features a Local Large Language Model (LLM), real-time speech recognition, LED animations, and high-fidelity speech synthesis using Kokoro TTS.
 
