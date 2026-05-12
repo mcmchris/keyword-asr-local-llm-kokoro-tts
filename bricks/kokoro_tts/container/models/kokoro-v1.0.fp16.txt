@@ -1,0 +1,1 @@
+This is placeholder where the kokoro-v1.0.fp16.onnx goes. Download the whole App with model included from the release section.
