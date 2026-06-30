@@ -16,7 +16,6 @@ print("🚀 PHASE 1: Loading LOCAL LLM into RAM...")
 print("="*50)
 
 llm = LargeLanguageModel(
-    model="genie:qwen3-4b", 
     system_prompt="You are a helpful voice assistant. Keep your answers brief, conversational, and maximum two sentences long. Whenever your answer includes a symbol or unit change it by its word; for example 86% = 86 percent and avoid emojis."
 )
 llm.with_memory(5)
@@ -40,7 +39,7 @@ print("✅ Kokoro TTS listo.")
 
 mic_spotter = Microphone()
 mic_asr = Microphone()
-asr = AutomaticSpeechRecognition()
+asr = AutomaticSpeechRecognition(mic_asr)
 
 app_state = "IDLE" 
 user_text = ""
@@ -82,7 +81,7 @@ def loop():
         print("\n🟢 ASR ACTIVE: Tell me your command! (Speak now)...")
         
         try:
-            with asr.transcribe_mic_stream(mic_asr, duration=7) as stream:
+            with asr.transcribe_stream(duration=7) as stream:
                 for chunk in stream:
                     match chunk.type:
                         case "partial_text":
