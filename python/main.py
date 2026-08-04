@@ -33,9 +33,9 @@ print("="*50)
 
 # Initialize and warmup Kokoro TTS
 tts = KokoroTTS()
-print("⏳ Haciendo warmup de Kokoro TTS...")
+print("⏳ Warming Up Kokoro TTS...")
 tts.warmup()
-print("✅ Kokoro TTS listo.")
+print("✅ Kokoro TTS ready.")
 
 mic_spotter = Microphone()
 mic_asr = Microphone()
