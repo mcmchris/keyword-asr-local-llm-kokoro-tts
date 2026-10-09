@@ -8,6 +8,7 @@ from arduino.app_bricks.keyword_spotting import KeywordSpotting
 from kokoro_tts import KokoroTTS
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import urllib.error
 import requests
 from requests.exceptions import ReadTimeout, ConnectionError
 
@@ -37,21 +38,26 @@ print("⏳ Warming Up Kokoro TTS...")
 tts.warmup()
 print("✅ Kokoro TTS ready.")
 
-mic_spotter = Microphone()
-mic_asr = Microphone()
+mic_spotter = Microphone(device=Microphone.USB_MIC_1, shared=True)
+mic_asr = Microphone(device=Microphone.USB_MIC_1, shared=True)
 asr = AutomaticSpeechRecognition(mic_asr)
 
 app_state = "IDLE" 
 user_text = ""
 
+spotter = KeywordSpotting(mic=mic_spotter, confidence=0.90, debounce_sec=2.0)
+
+available_classes = spotter.model_info.labels
+valid_keywords = [c for c in available_classes if c.lower() not in ["noise", "unknown", "_noise", "_unknown", "z-openset", "background"]] # ignore these classes
+target_keyword = valid_keywords[0] if valid_keywords else "Ventuno"
+
 def on_keyword_detected():
     global app_state
     if app_state == "IDLE":
-        print("\n✨ Wake word 'VENTUNO' detected!")
+        print(f"\n✨ Wake word '{target_keyword}' detected!")
         app_state = "LISTENING"
-
-spotter = KeywordSpotting(mic=mic_spotter, confidence=0.90, debounce_sec=2.0)
-spotter.on_detect("Ventuno", on_keyword_detected)
+        
+spotter.on_detect(target_keyword, on_keyword_detected)
 
 mic_spotter.start()
 asr.start()
@@ -59,7 +65,7 @@ spotter.start()
 
 # STATE 0: IDLE
 Bridge.call("set_state", 0)
-print("\n✅ All systems online! 💤 Listening for 'Ventuno'...")
+print(f"\n✅ All systems online! 💤 Listening for '{target_keyword}'...")
 
 def loop():
     global app_state, user_text
@@ -170,8 +176,13 @@ def loop():
         # --- LLM / TTS EXCEPTION HANDLING ---
         except (ReadTimeout, ConnectionError, RuntimeError) as e:
             print(f"\n⚠️ Container Error during AI/TTS Processing: {e}")
-        except Exception as e:
-            print(f"\n❌ Unexpected error processing Local LLM/TTS: {e}")
+        except urllib.error.HTTPError as e:
+            print(f"❌ HTTP Error {e.code}")
+            try:
+                error_body = e.read().decode('utf-8')
+                print(error_body)
+            except Exception as parse_error:
+                print(f"Couldn't read the error: {parse_error}") 
         # ------------------------------------
             
         print("\n🔄 Returning to sleep mode...")
@@ -180,10 +191,16 @@ def loop():
 
 try:
     App.run(user_loop=loop)
-except KeyboardInterrupt:
+except (KeyboardInterrupt, SystemExit):
     print("\nStopping application...")
 finally:
+
+    spotter.stop()
     mic_spotter.stop()
     mic_asr.stop()
     asr.stop()
-    Bridge.call("set_state", 0) # Turn off LED matrix on exit
+    
+    try:
+        Bridge.call("set_state", 0) # Turn off LED matrix on exit
+    except Exception as e:
+        pass
