@@ -14,6 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Bake the ONNX weights and voices bundle into the image so the container
 # boots fully offline. ~200 MB total (fp16 model + voices).
 COPY models/ /models/
+# Download the fp16 ONNX model if it isn't included locally (e.g. when cloned from Git).
+RUN if [ ! -f /models/kokoro-v1.0.fp16.onnx ]; then \
+        python -c "import urllib.request; print('Downloading kokoro-v1.0.fp16.onnx...'); urllib.request.urlretrieve('https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.fp16.onnx', '/models/kokoro-v1.0.fp16.onnx')"; \
+    fi
 
 COPY server.py .
 

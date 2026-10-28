@@ -51,3 +51,35 @@ The UI provides instant visual feedback based on the AI's state:
 
 * USB Microphone (Connected to USB-A)
 * USB Headset/Speaker (Connected to USB-A. Note: `main.py` maps the output explicitly to ALSA card 1, device 0).
+
+## Deploying with Arduino App Lab IDE
+
+For typical deployments using the Arduino App Lab IDE, follow the official tutorial: [Local AI Voice Assistant with the VENTUNO Q](https://docs.arduino.cc/tutorials/ventuno-q/local-ai-assistant/#ai-assistant-demo).
+
+## Deploying from Source (CLI)
+
+1. Copy the repository directory to the board's `~/ArduinoApps` folder:
+   ```bash
+   scp -r ../keyword-asr-local-llm-kokoro-tts arduino@<board-ip-or-hostname>:~/ArduinoApps
+   ```
+
+2. SSH into the board:
+   ```bash
+   ssh arduino@<board-ip-or-hostname>
+   ```
+
+3. Build the Docker image for the custom `kokoro_tts` brick (this also downloads the ONNX model if not already present):
+   ```bash
+   docker build -t keyword-asr-local-llm-kokoro-tts-kokoro_tts:latest ~/ArduinoApps/keyword-asr-local-llm-kokoro-tts/bricks/kokoro_tts/container
+   ```
+
+4. Configure the built-in ASR and Keyword Spotting bricks:
+   ```bash
+   arduino-app-cli app brick config user:keyword-asr-local-llm-kokoro-tts arduino:asr --model whisper-small-quantized
+   arduino-app-cli app brick config user:keyword-asr-local-llm-kokoro-tts arduino:keyword_spotting --model keyword-spotting-hey-arduino
+   ```
+
+5. Start the application:
+   ```bash
+   arduino-app-cli app start user:keyword-asr-local-llm-kokoro-tts
+   ```

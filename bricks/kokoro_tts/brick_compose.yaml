@@ -1,7 +1,8 @@
 services:
   kokoro_tts:
+    image: keyword-asr-local-llm-kokoro-tts-kokoro_tts:latest
     build:
-      context: ${APP_HOME}/bricks/kokoro_tts/container
+      context: ./container
     restart: unless-stopped
     environment:
       KOKORO_MODEL: ${KOKORO_MODEL:-fp16}
